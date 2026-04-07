@@ -1,0 +1,23 @@
+# Environment
+.env
+__pycache__/
+*.pyc
+*.pyo
+
+# Output directories
+assessment_1/output/
+assessment_2/output/
+assessment_2/repro_scripts/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Virtual environment
+venv/
+.venv/
