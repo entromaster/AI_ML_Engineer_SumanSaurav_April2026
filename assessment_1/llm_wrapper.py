@@ -21,7 +21,7 @@ class LLMWrapper:
         else:
             import google.generativeai as genai
             genai.configure(api_key=api_key)
-            self.client = genai.GenerativeModel("gemini-2.0-flash")
+            self.client = genai.GenerativeModel("gemini-2.5-flash")
             
     def generate_content(self, prompt: str):
         if self.provider == "openai":

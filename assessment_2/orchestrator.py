@@ -232,25 +232,21 @@ IMPORTANT: Return ONLY valid JSON. No markdown formatting, no code fences."""
 
         self.logger.log_llm_call("Orchestrator", prompt[:500])
         
-        max_retries = 3
-        retry_delays = [15, 30, 60]
-        
-        for attempt in range(max_retries + 1):
-            try:
-                response = self.llm.generate_content(prompt)
-                result_text = response.text
-                self.logger.log_llm_response("Orchestrator", result_text[:500])
-                break
-            except Exception as e:
-                error_str = str(e)
-                if ("429" in error_str or "quota" in error_str.lower() or "rate" in error_str.lower()) and attempt < max_retries:
-                    delay = retry_delays[attempt]
-                    console.print(f"  [yellow]Rate limited on synthesis. Waiting {delay}s before retry ({attempt+1}/{max_retries})...[/yellow]")
-                    self.logger.log_step("Orchestrator", f"Rate limited, retrying in {delay}s", f"Attempt {attempt+1}")
-                    time.sleep(delay)
-                else:
-                    self.logger.log_error("Orchestrator", f"Final synthesis LLM call failed: {e}")
-                    raise
+        import concurrent.futures
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        future = executor.submit(self.llm.generate_content, prompt)
+        try:
+            response = future.result(timeout=10.0)
+            result_text = response.text
+            self.logger.log_llm_response("Orchestrator", result_text[:500])
+        except concurrent.futures.TimeoutError:
+            console.print(f"  [yellow]LLM Timeout on synthesis after 10s.[/yellow]")
+            self.logger.log_error("Orchestrator", "Final synthesis LLM call timed out")
+            raise Exception("LLM call timed out")
+        except Exception as e:
+            console.print(f"  [red]LLM Error on synthesis: {e}[/red]")
+            self.logger.log_error("Orchestrator", f"Final synthesis LLM call failed: {e}")
+            raise
         
         try:
             

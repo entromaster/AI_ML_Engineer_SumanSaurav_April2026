@@ -52,32 +52,28 @@ class BaseAgent:
             return error_result
     
     def call_llm(self, prompt: str, context: dict = None) -> str:
-        """Send a prompt to the Gemini LLM with retry logic for rate limits."""
+        """Send a prompt to the Gemini LLM with a strict 10-second timeout."""
+        import concurrent.futures
         full_prompt = self._build_prompt(prompt, context)
         self.logger.log_llm_call(self.name, full_prompt[:500] + "..." if len(full_prompt) > 500 else full_prompt)
         
-        max_retries = 3
-        retry_delays = [15, 30, 60]
-        
-        for attempt in range(max_retries + 1):
-            try:
-                response = self.llm.generate_content(full_prompt)
-                result = response.text
-                self.logger.log_llm_response(self.name, result[:500] + "..." if len(result) > 500 else result)
-                return result
-            except Exception as e:
-                error_str = str(e)
-                if ("429" in error_str or "quota" in error_str.lower() or "rate" in error_str.lower()) and attempt < max_retries:
-                    delay = retry_delays[attempt]
-                    console.print(f"  [yellow]Rate limited. Waiting {delay}s before retry ({attempt+1}/{max_retries})...[/yellow]")
-                    self.logger.log_step(self.name, f"Rate limited, retrying in {delay}s", f"Attempt {attempt+1}")
-                    time.sleep(delay)
-                else:
-                    error_msg = f"LLM call failed: {error_str}"
-                    self.logger.log_error(self.name, error_msg)
-                    return error_msg
-        
-        return "LLM call failed after all retries"
+        executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+        future = executor.submit(self.llm.generate_content, full_prompt)
+        try:
+            response = future.result(timeout=10.0)
+            result = response.text
+            self.logger.log_llm_response(self.name, result[:500] + "..." if len(result) > 500 else result)
+            return result
+        except concurrent.futures.TimeoutError:
+            error_msg = "LLM call timed out after 10 seconds."
+            console.print(f"  [yellow]LLM Timeout: Moving to next agent.[/yellow]")
+            self.logger.log_error(self.name, error_msg)
+            return error_msg
+        except Exception as e:
+            error_msg = f"LLM call failed: {str(e)}"
+            console.print(f"  [red]LLM Error: {error_msg}. Moving to next agent.[/red]")
+            self.logger.log_error(self.name, error_msg)
+            return error_msg
     
     def _build_prompt(self, task_prompt: str, context: dict = None) -> str:
         parts = [

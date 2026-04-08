@@ -59,14 +59,14 @@ def main():
     openai_key = os.getenv("OPENAI_API_KEY")
     gemini_key = os.getenv("GOOGLE_API_KEY")
     
-    if openai_key:
-        provider = "openai"
-        api_key = openai_key
-        console.print("[green][OK] OpenAI API key loaded successfully[/green]")
-    elif gemini_key:
+    if gemini_key:
         provider = "gemini"
         api_key = gemini_key
         console.print("[green][OK] Google Gemini API key loaded successfully[/green]")
+    elif openai_key:
+        provider = "openai"
+        api_key = openai_key
+        console.print("[green][OK] OpenAI API key loaded successfully[/green]")
     else:
         console.print("[bold red]ERROR: Neither OPENAI_API_KEY nor GOOGLE_API_KEY found![/bold red]")
         console.print("Please set an API key in your .env file or environment variables.")
