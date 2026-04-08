@@ -1,7 +1,14 @@
 import warnings
 warnings.filterwarnings('ignore')
 import google.generativeai as genai
-genai.configure(api_key='AIzaSyAFqKx4tf9WHZyLUyDjDo4nQwI9TSl-6NM')
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+api_key = os.getenv("GOOGLE_API_KEY")
+if not api_key:
+    print("Warning: GOOGLE_API_KEY not found in environment")
+genai.configure(api_key=api_key)
 
 print("=== Available Gemini Models ===")
 for m in genai.list_models():

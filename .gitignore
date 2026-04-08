@@ -8,7 +8,9 @@ __pycache__/
 assessment_1/output/
 assessment_2/output/
 assessment_2/repro_scripts/
-
+check_models_file.py
+check_models_file2.py
+check_models.py
 # IDE
 .vscode/
 .idea/

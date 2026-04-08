@@ -1,8 +1,11 @@
 import warnings
 warnings.filterwarnings('ignore')
 import google.generativeai as genai
+import os
+from dotenv import load_dotenv
 
-genai.configure(api_key='AIzaSyAFqKx4tf9WHZyLUyDjDo4nQwI9TSl-6NM')
+load_dotenv()
+genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 models_to_test = [
     "gemini-2.5-flash",
